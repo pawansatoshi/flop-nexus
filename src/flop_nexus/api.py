@@ -5,10 +5,12 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import HTMLResponse
 
 from .identity import verify_signed_event
 from .models import AgentProfile, ReputationVector, SignedEvent, Task, TaskCreate, TaskEvent, TaskStatus
 from .store import Store
+from .web import render_home
 
 app = FastAPI(
     title="FLOP Nexus",
@@ -16,6 +18,11 @@ app = FastAPI(
     description="Agent discovery, coordination and reputation infrastructure for the FLOP ecosystem.",
 )
 store = Store()
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def home() -> str:
+    return render_home()
 
 
 @app.get("/healthz")
@@ -103,8 +110,8 @@ def append_task_event(task_id: UUID, event: TaskEvent) -> Task:
     if event.type.startswith("task."):
         try:
             task.status = TaskStatus(event.type.removeprefix("task."))
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Unknown task status event")
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Unknown task status event") from exc
     if event.payload.get("counterparty_did") and task.provider_did is None:
         task.provider_did = event.payload["counterparty_did"]
     task.evidence_event_ids.append(event.event_id)
