@@ -1,0 +1,113 @@
+"""FastAPI application for FLOP Nexus."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from fastapi import FastAPI, HTTPException, Query
+
+from .identity import verify_signed_event
+from .models import AgentProfile, ReputationVector, SignedEvent, Task, TaskCreate, TaskEvent, TaskStatus
+from .store import Store
+
+app = FastAPI(
+    title="FLOP Nexus",
+    version="0.1.0",
+    description="Agent discovery, coordination and reputation infrastructure for the FLOP ecosystem.",
+)
+store = Store()
+
+
+@app.get("/healthz")
+def healthz() -> dict[str, str]:
+    return {"status": "ok", "service": "flop-nexus"}
+
+
+@app.get("/.well-known/agent.json")
+def agent_manifest() -> dict:
+    return {
+        "name": "FLOP Nexus",
+        "description": "Independent agent discovery, coordination and reputation layer.",
+        "protocols": ["http", "technocore"],
+        "features": ["agent-discovery", "did-verification", "task-coordination", "reputation", "evidence"],
+        "official_flos_labs_product": False,
+    }
+
+
+@app.post("/agents", response_model=AgentProfile)
+def register_agent(agent: AgentProfile) -> AgentProfile:
+    if not agent.did.startswith("did:key:z"):
+        raise HTTPException(status_code=400, detail="Only did:key identifiers are supported")
+    store.upsert_agent(agent)
+    return agent
+
+
+@app.get("/agents", response_model=list[AgentProfile])
+def discover_agents(capability: str | None = Query(default=None, max_length=200)) -> list[AgentProfile]:
+    return store.list_agents(capability)
+
+
+@app.get("/agents/{did:path}", response_model=AgentProfile)
+def get_agent(did: str) -> AgentProfile:
+    agent = store.get_agent(did)
+    if agent is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return agent
+
+
+@app.get("/agents/{did:path}/reputation", response_model=ReputationVector)
+def get_reputation(did: str) -> ReputationVector:
+    return store.reputation(did)
+
+
+@app.post("/events/verify")
+def verify_event(event: SignedEvent) -> dict[str, object]:
+    try:
+        valid = verify_signed_event(event.did, event.room, event.nonce, event.text, event.signature)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"valid": valid, "did": event.did, "room": event.room, "nonce": event.nonce}
+
+
+@app.post("/tasks", response_model=Task, status_code=201)
+def create_task(payload: TaskCreate) -> Task:
+    task = Task(**payload.model_dump())
+    store.put_task(task)
+    store.put_event(
+        TaskEvent(
+            event_id=f"task:{task.id}:requested",
+            task_id=task.id,
+            type="task.requested",
+            actor_did=task.requester_did,
+            payload={"counterparty_did": task.provider_did},
+        )
+    )
+    return task
+
+
+@app.get("/tasks/{task_id}", response_model=Task)
+def get_task(task_id: UUID) -> Task:
+    task = store.get_task(str(task_id))
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+@app.post("/tasks/{task_id}/events", response_model=Task)
+def append_task_event(task_id: UUID, event: TaskEvent) -> Task:
+    task = store.get_task(str(task_id))
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if event.task_id != task_id:
+        raise HTTPException(status_code=400, detail="Event task_id does not match URL")
+    if event.type.startswith("task."):
+        try:
+            task.status = TaskStatus(event.type.removeprefix("task."))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Unknown task status event")
+    if event.payload.get("counterparty_did") and task.provider_did is None:
+        task.provider_did = event.payload["counterparty_did"]
+    task.evidence_event_ids.append(event.event_id)
+    store.put_event(event)
+    store.put_task(task)
+    return task
