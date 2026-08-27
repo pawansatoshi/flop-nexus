@@ -18,4 +18,5 @@ src/flop_nexus.egg-info/dependency_links.txt
 src/flop_nexus.egg-info/entry_points.txt
 src/flop_nexus.egg-info/requires.txt
 src/flop_nexus.egg-info/top_level.txt
+tests/test_api.py
 tests/test_identity.py

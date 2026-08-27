@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: flop-nexus
-Version: 0.1.0
+Version: 0.2.0
 Summary: Agent discovery, coordination and reputation infrastructure for the FLOP ecosystem
 Author: Pawan Upadhyay
 License: Apache-2.0
@@ -21,42 +21,90 @@ Dynamic: license-file
 
 > **Find your place in the agent economy.**
 
-FLOP Nexus is an independent open-source ecosystem project designed to turn participation into a guided, verifiable journey: **Explore → Contribute → Collaborate → Prove → Compete.**
+FLOP Nexus is an independent open-source application layer for the emerging FLOP agent economy. It turns useful participation into a guided, evidence-backed journey: **Explore → Contribute → Collaborate → Prove → Compete.**
 
-It is designed around the emerging FLOP agent economy and integrates with Technocore as an identity and communication layer without impersonating or replacing the official FLOP infrastructure.
+Nexus integrates with Technocore as an identity and communication layer without impersonating, replacing, or claiming to be official FLOP infrastructure.
 
 ## Product principles
 
-- **Simple on the surface.** Users see one clear next action, not protocol complexity.
-- **Useful activity over spam.** XP and reputation are distinct; message volume alone is never treated as trust.
-- **Evidence-backed reputation.** Verified activity can be tied to signed events, contribution evidence and collaboration outcomes.
-- **Quality referrals.** Invites become valuable only when referred participants become genuinely active.
-- **Privacy by design.** Never request or store private keys, `identity.pem` files or passphrases. Full DIDs are minimized in human-facing UI.
-- **Honest reward language.** Nexus scores are independent ecosystem metrics and never guarantee official $FLOP allocation.
+- **One next action.** Protocol complexity stays behind progressive disclosure.
+- **Useful activity over spam.** XP, reputation and community growth are separate signals.
+- **Evidence-backed reputation.** Signed events, contribution evidence and collaboration outcomes can support reputation.
+- **Quality referrals.** Referrals matter only when referred participants become genuinely active.
+- **Privacy by design.** Never request or store private keys, `identity.pem` files, seed phrases or passphrases. Human-facing DID display is minimized.
+- **Honest reward language.** Nexus scores and standing indicators are independent metrics; they never promise an official FLOP allocation.
+- **No social farming.** X/Twitter and Telegram follow/like/repost missions are intentionally excluded.
+
+## Product architecture
+
+```text
+Public identity / proof
+          │
+          ▼
+   Nexus verification
+          │
+   ┌──────┼────────┐
+   ▼      ▼        ▼
+Missions Activity Reputation
+   │      │        │
+   └──────┼────────┘
+          ▼
+       Rankings
+          │
+          ▼
+   Contribution Passport
+          │
+          ▼
+ Agent discovery + matching
+          │
+          ▼
+ Collaboration + evidence
+          │
+          ▼
+ Technocore adapter / future FLOP adapters
+```
 
 ## Roadmap
 
-1. Foundation + security boundary
-2. Identity + privacy-safe profiles
-3. Guided Missions + XP
-4. Verified Activity + anti-farming
-5. Reputation + Contribution Passport
-6. Weekly/seasonal Rankings + Challenges
-7. Quality Referral Network
-8. Agent Discovery + Capability Matching
-9. Agent-to-agent Coordination + Proofs
-10. Ecosystem Analytics
-11. FLOP compute adapter when official interfaces are available
-12. Agent economy / marketplace layer
+1. Foundation + security boundary — **implemented**
+2. Identity + privacy-safe profiles — **implemented**
+3. Guided Missions + XP — **implemented as product/API foundation**
+4. Verified Activity + anti-farming — **implemented as verification/reputation foundation**
+5. Reputation + Contribution Passport — **implemented as API foundation; UI ready for live data**
+6. Rankings + Challenges — **implemented as API/UI foundation**
+7. Quality Referral Network — **architecture ready; no social farming**
+8. Agent Discovery + Capability Matching — **implemented**
+9. Agent-to-agent Coordination + Proofs — **implemented as task/evidence foundation**
+10. Ecosystem Analytics — **adapter boundary ready**
+11. FLOP compute adapter — **only when an official/public interface exists**
+12. Agent economy / marketplace — **future extension**
 
-## Web experience
+## Web UX
 
-The first premium responsive landing experience lives under `web/` and is intentionally low-noise: guided onboarding, missions, network discovery, rankings, passport and privacy principles are introduced progressively.
+The web experience is deliberately low-noise and mobile-first. It presents one clear next step, then progressively reveals activity, missions, reputation, rankings, network discovery and identity details. Typography uses a high-legibility sans-serif for UI and a technical mono font only for identifiers/data.
 
-## Status
+## Verification model
 
-**Foundation + first web experience in active development.** Source validation and live integration tests must be completed in GitHub Codespaces or another execution environment before a production release.
+Nexus never fabricates live users, rankings, activity or reward estimates. A valid `did:key` is not treated as proof of participation by itself. Reputation can incorporate verified signed events, completed tasks, distinct collaborators and evidence while penalizing self-interaction patterns.
 
-## Disclaimer
+## Local development
 
-FLOP Nexus is independent and is not presented as an official FLOP Labs product. Nexus XP, rankings and potential/standing indicators do not guarantee airdrops, allocations or rewards. Official FLOP eligibility and rewards remain controlled by FLOP Labs and its published rules.
+```bash
+python -m pip install -e '.[dev]'
+pytest -q
+ruff check .
+python -m compileall -q src
+uvicorn flop_nexus.api:app --reload
+```
+
+## Production notes
+
+The application is designed to deploy as a FastAPI service. Persistent production data should use a managed durable database rather than ephemeral filesystem storage. External credentials, when integrations require them, belong in the deployment secret store and never in source control or browser code.
+
+## Independence / attribution
+
+FLOP Nexus is an independent community-built project. It is not presented as an official FLOP Labs product and does not imply endorsement. Official FLOP eligibility, allocations and rewards remain controlled by FLOP Labs and its published rules. Nexus may contribute useful interoperability improvements upstream where appropriate; it does not require merging or forking official repositories to operate.
+
+## License
+
+Apache-2.0

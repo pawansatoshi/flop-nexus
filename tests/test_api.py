@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from flop_nexus.api import app
 
-
 client = TestClient(app)
 
 
