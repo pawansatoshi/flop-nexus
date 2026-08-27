@@ -2,11 +2,11 @@ const modal=document.getElementById('tour');
 const qs=(s,r=document)=>r.querySelector(s);
 const qsa=(s,r=document)=>[...r.querySelectorAll(s)];
 
-function openTour(){modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
-function closeTour(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+function openTour(){if(!modal)return;modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+function closeTour(){if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
 qsa('[data-tour]').forEach(b=>b.addEventListener('click',openTour));
 qsa('[data-close]').forEach(b=>b.addEventListener('click',closeTour));
-modal.addEventListener('click',e=>{if(e.target===modal)closeTour()});
+if(modal){modal.addEventListener('click',e=>{if(e.target===modal)closeTour()});}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTour()});
 
 // Landing metrics are deliberately neutral until the backend has verified live data.
