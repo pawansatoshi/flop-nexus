@@ -8,22 +8,14 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 
 from .identity import verify_signed_event
-from .models import (
-    AgentProfile,
-    ReputationVector,
-    SignedEvent,
-    Task,
-    TaskCreate,
-    TaskEvent,
-    TaskStatus,
-)
+from .models import AgentProfile, ReputationVector, SignedEvent, Task, TaskCreate, TaskEvent, TaskStatus
 from .store import Store
 from .web import render_home
 
 app = FastAPI(
     title="FLOP Nexus",
-    version="0.1.0",
-    description="Agent discovery, coordination and reputation infrastructure for the FLOP ecosystem.",
+    version="0.2.0",
+    description="Independent agent discovery, coordination and reputation infrastructure for the FLOP ecosystem.",
 )
 store = Store()
 
@@ -35,7 +27,7 @@ def home() -> str:
 
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
-    return {"status": "ok", "service": "flop-nexus", "version": "0.1.0"}
+    return {"status": "ok", "service": "flop-nexus", "version": "0.2.0"}
 
 
 @app.get("/missions")
@@ -46,6 +38,27 @@ def missions() -> list[dict[str, object]]:
         {"id": "collaboration", "title": "Complete a verified collaboration", "category": "Collaborate", "xp": 250, "difficulty": "Advanced"},
         {"id": "community", "title": "Strengthen the community", "category": "Community", "xp": 25, "difficulty": "Easy"},
     ]
+
+
+@app.get("/activity/{did:path}")
+def activity(did: str) -> dict[str, object]:
+    """Return a transparent Nexus activity snapshot for a public DID."""
+    reputation = store.reputation(did)
+    agents = store.list_agents()
+    ranked = sorted((store.reputation(a.did).score for a in agents), reverse=True)
+    rank = next((i + 1 for i, score in enumerate(ranked) if score <= reputation.score), None)
+    if not did.startswith("did:key:z"):
+        raise HTTPException(status_code=400, detail="Only did:key identifiers are supported")
+    return {
+        "did": did,
+        "indexed": store.get_agent(did) is not None,
+        "rank": rank,
+        "reputation": reputation.model_dump(),
+        "official_signals": "not_connected",
+        "technocore_signals": "not_connected",
+        "public_contributions": reputation.evidence_count,
+        "reward_status": "not_official",
+    }
 
 
 @app.get("/rankings")
@@ -117,15 +130,7 @@ def verify_event(event: SignedEvent) -> dict[str, object]:
 def create_task(payload: TaskCreate) -> Task:
     task = Task(**payload.model_dump())
     store.put_task(task)
-    store.put_event(
-        TaskEvent(
-            event_id=f"task:{task.id}:requested",
-            task_id=task.id,
-            type="task.requested",
-            actor_did=task.requester_did,
-            payload={"counterparty_did": task.provider_did},
-        )
-    )
+    store.put_event(TaskEvent(event_id=f"task:{task.id}:requested", task_id=task.id, type="task.requested", actor_did=task.requester_did, payload={"counterparty_did": task.provider_did}))
     return task
 
 
