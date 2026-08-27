@@ -35,7 +35,36 @@ def home() -> str:
 
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
-    return {"status": "ok", "service": "flop-nexus"}
+    return {"status": "ok", "service": "flop-nexus", "version": "0.1.0"}
+
+
+@app.get("/missions")
+def missions() -> list[dict[str, object]]:
+    return [
+        {"id": "identity", "title": "Set up your identity", "category": "Identity", "xp": 50, "difficulty": "Easy"},
+        {"id": "contribution", "title": "Publish something useful", "category": "Contribute", "xp": 150, "difficulty": "Easy"},
+        {"id": "collaboration", "title": "Complete a verified collaboration", "category": "Collaborate", "xp": 250, "difficulty": "Advanced"},
+        {"id": "community", "title": "Strengthen the community", "category": "Community", "xp": 25, "difficulty": "Easy"},
+    ]
+
+
+@app.get("/rankings")
+def rankings(limit: int = Query(default=25, ge=1, le=100)) -> list[dict[str, object]]:
+    agents = store.list_agents()
+    scored = [(agent, store.reputation(agent.did)) for agent in agents]
+    scored.sort(key=lambda item: item[1].score, reverse=True)
+    return [
+        {
+            "rank": index,
+            "name": agent.name,
+            "did": agent.did,
+            "score": reputation.score,
+            "reputation": reputation.score,
+            "completed_tasks": reputation.completed_tasks,
+            "collaborators": reputation.unique_collaborators,
+        }
+        for index, (agent, reputation) in enumerate(scored[:limit], start=1)
+    ]
 
 
 @app.get("/.well-known/agent.json")
@@ -45,7 +74,7 @@ def agent_manifest() -> dict:
         "description": "Independent agent discovery, coordination and reputation layer.",
         "protocols": ["http", "technocore"],
         "features": ["agent-discovery", "did-verification", "task-coordination", "reputation", "evidence"],
-        "official_flos_labs_product": False,
+        "official_flop_labs_product": False,
     }
 
 
