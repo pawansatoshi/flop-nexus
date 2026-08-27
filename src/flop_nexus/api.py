@@ -8,7 +8,15 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 
 from .identity import verify_signed_event
-from .models import AgentProfile, ReputationVector, SignedEvent, Task, TaskCreate, TaskEvent, TaskStatus
+from .models import (
+    AgentProfile,
+    ReputationVector,
+    SignedEvent,
+    Task,
+    TaskCreate,
+    TaskEvent,
+    TaskStatus,
+)
 from .store import Store
 from .web import render_home
 

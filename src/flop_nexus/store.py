@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +49,7 @@ class Store:
             )
 
     def upsert_agent(self, agent: AgentProfile) -> AgentProfile:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         with self._connect() as db:
             db.execute(
                 """INSERT INTO agents(did,payload,created_at,updated_at)

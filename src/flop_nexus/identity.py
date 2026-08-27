@@ -51,7 +51,7 @@ def decode_signature(signature: str) -> bytes:
 def verify_signed_event(did: str, room: str, nonce: int, text: str, signature: str) -> bool:
     """Verify a Technocore Ed25519 signature over room|nonce|normalized-text."""
     public_key = Ed25519PublicKey.from_public_bytes(public_key_from_did(did))
-    payload = f"{room}|{nonce}|{normalize_text(text)}".encode("utf-8")
+    payload = f"{room}|{nonce}|{normalize_text(text)}".encode()
     try:
         public_key.verify(decode_signature(signature), payload)
     except InvalidSignature:

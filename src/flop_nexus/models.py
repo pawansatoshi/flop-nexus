@@ -1,6 +1,6 @@
 """Domain models shared by the API and services."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
@@ -47,7 +47,7 @@ class SignedEvent(BaseModel):
     def timestamp_utc(cls, value: datetime | None) -> datetime | None:
         if value is None:
             return value
-        return value.astimezone(timezone.utc)
+        return value.astimezone(UTC)
 
 
 class TaskCreate(BaseModel):
@@ -63,8 +63,8 @@ class Task(TaskCreate):
     id: UUID = Field(default_factory=uuid4)
     status: TaskStatus = TaskStatus.REQUESTED
     provider_did: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     evidence_event_ids: list[str] = Field(default_factory=list)
 
 
@@ -86,5 +86,5 @@ class TaskEvent(BaseModel):
     type: str
     actor_did: str
     payload: dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     signed_event: SignedEvent | None = None

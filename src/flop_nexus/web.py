@@ -8,9 +8,6 @@ until a verified data source is connected.
 
 from __future__ import annotations
 
-from html import escape
-
-
 PAGE = r'''<!doctype html>
 <html lang="en">
 <head>

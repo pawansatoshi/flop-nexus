@@ -1,0 +1,2 @@
+[console_scripts]
+flop-nexus = flop_nexus.cli:main

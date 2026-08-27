@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 from .discovery import match_agents
 from .models import AgentProfile, Task, TaskStatus
-
 
 ALLOWED_TRANSITIONS: dict[TaskStatus, set[TaskStatus]] = {
     TaskStatus.REQUESTED: {TaskStatus.ACCEPTED, TaskStatus.CANCELLED},
@@ -22,8 +23,8 @@ def transition(task: Task, target: TaskStatus) -> Task:
     if target not in ALLOWED_TRANSITIONS[task.status]:
         raise ValueError(f"invalid task transition: {task.status} -> {target}")
     task.status = target
-    from datetime import datetime, timezone
-    task.updated_at = datetime.now(timezone.utc)
+    from datetime import datetime
+    task.updated_at = datetime.now(UTC)
     return task
 
 
